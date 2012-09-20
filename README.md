@@ -80,13 +80,23 @@ Just add it to your app/assets/javascripts/application.js file
 
 ### Model Example
 
-Assuming you have a Brand model:
+Assuming you have Brand and Product models:
 
     class Brand < ActiveRecord::Base
     end
 
+    class Product < ActiveRecord::Base
+    end
+
     create_table :brand do |t|
       t.column :name, :string
+      t.column :description, :string
+      t.column :slogan, :string
+    end
+
+    create_table :product do |t|
+      t.column :name, :string
+      t.column :description, :string
     end
 
 ### Controller
@@ -95,13 +105,13 @@ To set up the required action on your controller, all you have to do is call it 
 as in the following example:
 
     class ProductsController < Admin::BaseController
-      autocomplete :brand, :name
+      autocomplete :brand_and_products_search, { :brand => [:name, :description], :product => [:name, :description]  }
     end
 
-This will create an action _autocomplete_brand_name_ on your controller, don't forget to add it on your routes file
+This will create an action _autocomplete_brand_and_products_search_ on your controller, don't forget to add it on your routes file
 
     resources :products do
-      get :autocomplete_brand_name, :on => :collection
+      get :autocomplete_brand_and_products_search, :on => :collection
     end
 
 ### Options
@@ -111,7 +121,7 @@ This will create an action _autocomplete_brand_name_ on your controller, don't f
 By default, the search starts from the beginning of the string you're searching for. If you want to do a full search, set the _full_ parameter to true.
 
     class ProductsController < Admin::BaseController
-      autocomplete :brand, :name, :full => true
+      autocomplete :brand_and_products_search, { :brand => [:name, :description], :product => [:name, :description]  }, :full => true
     end
 
 The following terms would match the query 'un':
@@ -130,17 +140,17 @@ Only the following terms mould match the query 'un':
 
 By default, your search will only return the required columns from the database needed to populate your form, namely id and the column you are searching (name, in the above example).
 
-Passing an array of attributes/column names to this option will fetch and return the specified data.
+Passing an hash of object => attributes/column names to this option will fetch and return the specified data.
 
     class ProductsController < Admin::BaseController
-      autocomplete :brand, :name, :extra_data => [:slogan]
+      autocomplete :brand_and_products_search, { :brand => [:name, :description], :product => [:name, :description]  }, :extra_data => { :brand => [ :slogan ] }
     end
 
 #### :display_value
 
-If you want to display a different version of what you're looking for, you can use the :display_value option.
+If you want to display a different version of what you're looking for, you can use the :display_values option.
 
-This options receives a method name as the parameter, and that method will be called on the instance when displaying the results.
+This options receives a hash of object => method name as the parameter, and that method will be called on the instance when displaying the results.
 
     class Brand < ActiveRecord::Base
       def funky_method
@@ -150,7 +160,7 @@ This options receives a method name as the parameter, and that method will be ca
 
 
     class ProductsController < Admin::BaseController
-      autocomplete :brand, :name, :display_value => :funky_method
+      autocomplete :brand_and_products_search, { :brand => [:name, :description], :product => [:name, :description]  }, :display_values => { :brand => :funky_method }
     end
 
 In the example above, you will search by _name_, but the autocomplete list will display the result of _funky_method_
@@ -172,7 +182,7 @@ Only the object's id and the column you are searching on will be returned in JSO
 Autocomplete uses Yajl as JSON encoder/decoder, but you can specify your own
 
     class ProductsController < Admin::BaseController
-      autocomplete :brand, :name do |items|
+      autocomplete :brand_and_products_search, { :brand => [:name, :description], :product => [:name, :description]  } do |items|
          CustomJSON::Encoder.encode(items)
       end
     end
@@ -183,12 +193,12 @@ On your view, all you have to do is include the attribute autocomplete on the te
 using the url to the autocomplete action as the value.
 
     form_for @product do |f|
-      f.autocomplete_field :brand_name, autocomplete_brand_name_products_path
+      f.autocomplete_field :brand_or_products_name, autocomplete_brand_and_products_search_products_path
     end
 
 This will generate an HTML tag that looks like:
 
-    <input type="text" data-autocomplete="products/autocomplete_brand_name">
+    <input type="text" data-autocomplete="products/autocomplete_brand_and_products_search">
 
 If you are not using a FormBuilder (form_for) or you just want to include an autocomplete field without the form, you can use the
 *autocomplete_field_tag* helper.
@@ -203,7 +213,7 @@ Now your autocomplete code is unobtrusive, Rails 3 style.
 
 If you need to use the id of the selected object, you can use the *id_element* attribute too:
 
-    f.autocomplete_field :brand_name, autocomplete_brand_name_products_path, :id_element => '#some_element'
+    f.autocomplete_field :brand_or_products_name, autocomplete_brand_and_products_search_products_path, :id_element => '#some_element'
 
 This will update the field with id *#some_element with the id of the selected object. The value for this option can be any jQuery selector.
 
@@ -216,7 +226,7 @@ The :update_elements attribute accepts a hash where the keys represent the objec
     f.autocomplete_field :brand_name, autocomplete_brand_name_products_path, :update_elements => {:id => '#id_element', :slogan => '#some_other_element'}
 
     class ProductsController < Admin::BaseController
-      autocomplete :brand, :name, :extra_data => [:slogan]
+      autocomplete :brand_and_products_search, { :brand => [:name, :description], :product => [:name, :description]  }, :extra_data => { :brand => [:slogan] }
     end
 
 The previous example would fetch the extra attribute slogan and update jQuery('#some_other_element') with the slogan value.
@@ -364,4 +374,3 @@ Everyone on [this list](https://github.com/crowdint/rails3-jquery-autocomplete/c
 [Crowd Interactive](http://www.crowdint.com) is an American web design and development company that happens to work in Colima, Mexico.
 We specialize in building and growing online retail stores. We don’t work with everyone – just companies we believe in. Call us today to see if there’s a fit.
 Find more info [here](http://www.crowdint.com)!
-
