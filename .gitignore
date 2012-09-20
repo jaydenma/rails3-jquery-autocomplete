@@ -1,6 +1,9 @@
 ## MAC OS
 .DS_Store
 
+## ECLIPSE
+.project
+
 ## TEXTMATE
 *.tmproj
 tmtags
