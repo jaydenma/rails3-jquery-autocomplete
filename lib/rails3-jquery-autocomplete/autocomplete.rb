@@ -16,19 +16,19 @@ module Rails3JQueryAutocomplete
     # Usage:
     #
     # class ProductsController < Admin::BaseController
-    #   autocomplete :brand, :name
+    #   autocomplete :brand_and_products_search, { :brand => [:name, :description], :product => [:name, :description]  }
     # end
     #
-    # This will magically generate an action autocomplete_brand_name, so,
+    # This will magically generate an action autocomplete_brand_and_products_search, so,
     # don't forget to add it on your routes file
     #
     #   resources :products do
-    #      get :autocomplete_brand_name, :on => :collection
+    #      get :autocomplete_brand_and_products_search, :on => :collection
     #   end
     #
     # Now, on your view, all you have to do is have a text field like:
     #
-    #   f.text_field :brand_name, :autocomplete => autocomplete_brand_name_products_path
+    #   f.text_field :brand_or_products_name, :autocomplete => autocomplete_brand_and_products_search_products_path
     #
     #
     # Yajl is used by default to encode results, if you want to use a different encoder
@@ -41,23 +41,24 @@ module Rails3JQueryAutocomplete
     # end
     #
     module ClassMethods
-      def autocomplete(object, method, options = {})
-        define_method("autocomplete_#{object}_#{method}") do
-
-          method = options[:column_name] if options.has_key?(:column_name)
+      def autocomplete(name, targets, options = {})
+        define_method("autocomplete_#{name}") do
 
           term = params[:term]
-
+          items = []
+          
           if term && !term.blank?
-            #allow specifying fully qualified class name for model object
-            class_name = options[:class_name] || object
-            items = get_autocomplete_items(:model => get_object(class_name), \
-              :options => options, :term => term, :method => method)
+            targets.each do |object, methods|
+              methods.each do |method|
+                items += ( get_autocomplete_items(:model => get_object( object ), \
+                :options => options, :term => term, :method => method ) )
+              end
+            end
           else
-            items = {}
+            items = []
           end
 
-          render :json => json_for_autocomplete(items, options[:display_value] ||= method, options[:extra_data])
+          render :json => json_for_autocomplete(items, targets, options[:display_values], options[:extra_data])
         end
       end
     end
@@ -81,13 +82,24 @@ module Rails3JQueryAutocomplete
     # Can be overriden to show whatever you like
     # Hash also includes a key/value pair for each method in extra_data
     #
-    def json_for_autocomplete(items, method, extra_data=[])
+#    def json_for_autocomplete(items, method, extra_data=[])
+#      items.collect do |item|
+#        hash = {"id" => item.id.to_s, "label" => item.send(method), "value" => item.send(method)}
+#        extra_data.each do |datum|
+#          hash[datum] = item.send(datum)
+#        end if extra_data
+#        # TODO: Come back to remove this if clause when test suite is better
+#        hash
+#      end
+#    end
+    
+    def json_for_autocomplete(items, targets, display_values={}, extra_data={})
       items.collect do |item|
-        hash = {"id" => item.id.to_s, "label" => item.send(method), "value" => item.send(method)}
-        extra_data.each do |datum|
+        display_value = display_values[ item.class.name.downcase.to_sym ] ? display_values[ item.class.name.downcase.to_sym ] : targets[ item.class.name.downcase.to_sym ][0] 
+        hash = { "id" => item.id, "label" => item.send( display_value ), "value" => item.send( display_value ), "type" => item.class.name.downcase }
+        extra_data[ item.class.name.downcase.to_sym ].each do |datum|
           hash[datum] = item.send(datum)
-        end if extra_data
-        # TODO: Come back to remove this if clause when test suite is better
+        end if extra_data[ item.class.name.downcase.to_sym ]
         hash
       end
     end
