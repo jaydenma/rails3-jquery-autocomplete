@@ -240,6 +240,21 @@ A javascript event named *railsAutocomplete.select* is fired on the input field 
       alert(data.item.id);
     });
 
+### Custom item rendering
+
+To override the default rendering function for the elements of the list, you can use the *:custom_render* HTML attribute.
+
+    f.autocomplete_field :brand_or_products_name, autocomplete_brand_and_products_search_products_path, :custom_render => 'renderAutocompleteItem'
+
+    renderAutocompleteItem = function( ul, item ) {
+	  var inner_html = '<a>' + item.label + ' <span class="badge badge-info">' + item.info + '</span></a>';
+	  return $( "<li></li>" )
+	    .data( "item.autocomplete", item )
+	    .append(inner_html)
+	    .appendTo( ul );
+	};
+
+
 ## Formtastic
 
 If you are using [Formtastic](http://github.com/justinfrench/formtastic), you automatically get the *autocompleted_input* helper on *semantic_form_for*:
