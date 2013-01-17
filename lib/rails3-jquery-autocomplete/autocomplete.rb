@@ -95,11 +95,11 @@ module Rails3JQueryAutocomplete
     
     def json_for_autocomplete(items, targets, display_values={}, extra_data={})
       items.collect do |item|
-        display_value = display_values[ item.class.name.downcase.to_sym ] ? display_values[ item.class.name.downcase.to_sym ] : targets[ item.class.name.downcase.to_sym ][0] 
-        hash = { "id" => item.id, "label" => item.send( display_value ), "value" => item.send( display_value ), "type" => item.class.name.downcase }
-        extra_data[ item.class.name.downcase.to_sym ].each do |datum|
+        display_value = display_values[ item.class.name.underscore.to_sym ] ? display_values[ item.class.name.underscore.to_sym ] : targets[ item.class.name.underscore.to_sym ][0] 
+        hash = { "id" => item.id, "label" => item.send( display_value ), "value" => item.send( display_value ), "type" => item.class.name.underscore }
+        extra_data[ item.class.name.underscore.to_sym ].each do |datum|
           hash[datum] = item.send(datum)
-        end if extra_data[ item.class.name.downcase.to_sym ]
+        end if extra_data[ item.class.name.underscore.to_sym ]
         hash
       end
     end
