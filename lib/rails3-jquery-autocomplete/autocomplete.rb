@@ -64,6 +64,7 @@ module Rails3JQueryAutocomplete
     end
 
     # Returns a limit that will be used on the query
+    # Need to modify this to work properly.. now this does.. x*10 queries, where x is the number of model
     def get_autocomplete_limit(options)
       options[:limit] ||= 10
     end
@@ -95,11 +96,11 @@ module Rails3JQueryAutocomplete
     
     def json_for_autocomplete(items, targets, display_values={}, extra_data={})
       items.collect do |item|
-        display_value = display_values[ item.class.name.underscore.to_sym ] ? display_values[ item.class.name.underscore.to_sym ] : targets[ item.class.name.underscore.to_sym ][0] 
+        display_value = !display_values.nil? ? display_values[ item.class.name.underscore.to_sym ] : targets[ item.class.name.underscore.to_sym ][0] 
         hash = { "id" => item.id, "label" => item.send( display_value ), "value" => item.send( display_value ), "type" => item.class.name.underscore }
         extra_data[ item.class.name.underscore.to_sym ].each do |datum|
           hash[datum] = item.send(datum)
-        end if extra_data[ item.class.name.underscore.to_sym ]
+        end if !extra_data.nil?
         hash
       end
     end
