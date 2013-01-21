@@ -41,14 +41,14 @@ module Rails3JQueryAutocomplete
     # end
     #
     module ClassMethods
-      def autocomplete(name, options = {})
+      def autocomplete(name, targets = [], options = {})
         define_method("autocomplete_#{name}") do
 
           term = params[:term]
           items = {}
           
           if term && !term.blank?
-            items = get_autocomplete_items(:term => term, :options => options)
+            items = get_autocomplete_items(:term => term, :options => options, :targets => targets)
           end
 
           render :json => json_for_autocomplete(items, options[:display_values])
@@ -66,32 +66,17 @@ module Rails3JQueryAutocomplete
     #
     #   get_object(:actor)
     #   # returns a Actor constant supposing it is already defined
-    #
     def get_object(model_sym)
       object = model_sym.to_s.camelize.constantize
     end
 
-    #
-    # Returns a hash with three keys actually used by the Autocomplete jQuery-ui
-    # Can be overriden to show whatever you like
-    # Hash also includes a key/value pair for each method in extra_data
-    #
-#    def json_for_autocomplete(items, method, extra_data=[])
-#      items.collect do |item|
-#        hash = {"id" => item.id.to_s, "label" => item.send(method), "value" => item.send(method)}
-#        extra_data.each do |datum|
-#          hash[datum] = item.send(datum)
-#        end if extra_data
-#        # TODO: Come back to remove this if clause when test suite is better
-#        hash
-#      end
-#    end
-    
+    # Returns a hash with keys actually used by the Autocomplete jQuery-ui
+    # Can be overriden to show the value you like
     def json_for_autocomplete(items, display_values={})
       result = []
 
       items.each do |item_with_category|  
-        result += [{ "value" => item_with_category.first, "class" => "autocomplete_header" }]
+        result += [{ "value" => item_with_category.first.sub(/data_/,'').pluralize.titleize, "class" => "autocomplete_header" }]
         result += item_with_category.second.collect do |item|
           #if there are no display values, take name
           display_value = !display_values.nil? ? display_values[ item.class.name.underscore.to_sym ] : "name"

@@ -3,6 +3,7 @@ module Rails3JQueryAutocomplete
     module ActiveRecord
       def get_autocomplete_items(parameters)
         term    = parameters[:term]
+        targets = parameters[:targets]
         options = parameters[:options]
         limit   = get_autocomplete_limit(options)
 
@@ -10,41 +11,14 @@ module Rails3JQueryAutocomplete
 
         items = {}
 
-        result = []
-        search.data_organizations.each do |res|
-          result += [res]
+        targets.each do |target|
+          result = []
+          reference = target.to_s.pluralize
+          search.send(reference).each do |res|
+            result += [res]
+          end
+          items.merge!(reference => result)
         end
-        items.merge!("Organizations" => result)
-
-        result = []
-        search.data_users.each do |res|
-          result += [res]
-        end
-        items.merge!("Users" => result)
-
-        result = []
-        search.data_workstations.each do |res|
-          result += [res]
-        end
-        items.merge!("Workstations" => result)
-
-        result = []
-        search.data_servers.each do |res|
-          result += [res]
-        end
-        items.merge!("Servers" => result)
-
-        result = []
-        search.data_network_devices.each do |res|
-          result += [res]
-        end
-        items.merge!("Network Devices" => result)
-
-        result = []
-        search.data_softwares.each do |res|
-          result += [res]
-        end
-        items.merge!("Softwares" => result)
 
         items
       end
