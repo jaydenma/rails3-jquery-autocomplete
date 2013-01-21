@@ -7,7 +7,7 @@ module Rails3JQueryAutocomplete
         options = parameters[:options]
         limit   = get_autocomplete_limit(options)
 
-        search = Search.new(:keyword => term, :max_result => limit)
+        search = Search.new(:keyword => term, :max_result => limit, :account_id => current_account.id)
 
         items = {}
 
