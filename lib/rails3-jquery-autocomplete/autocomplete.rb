@@ -41,24 +41,17 @@ module Rails3JQueryAutocomplete
     # end
     #
     module ClassMethods
-      def autocomplete(name, targets, options = {})
+      def autocomplete(name, options = {})
         define_method("autocomplete_#{name}") do
 
           term = params[:term]
           items = {}
           
           if term && !term.blank?
-            targets.each do |object, methods|
-              methods.each do |method|
-                items.merge!(object => ( get_autocomplete_items(:model => get_object( object ), \
-                :options => options, :term => term, :method => method ) ) )
-              end
-            end
-          else
-            items = {}
+            items = get_autocomplete_items(:term => term, :options => options)
           end
 
-          render :json => json_for_autocomplete(items, targets, options[:display_values], options[:extra_data])
+          render :json => json_for_autocomplete(items, options[:display_values])
         end
       end
     end
@@ -66,7 +59,7 @@ module Rails3JQueryAutocomplete
     # Returns a limit that will be used on the query
     # Need to modify this to work properly.. now this does.. x*10 queries, where x is the number of model
     def get_autocomplete_limit(options)
-      options[:limit] ||= 10
+      options[:limit] ||= 5
     end
 
     # Returns parameter model_sym as a constant
@@ -94,19 +87,15 @@ module Rails3JQueryAutocomplete
 #      end
 #    end
     
-    def json_for_autocomplete(items, targets, display_values={}, extra_data={})
-    
+    def json_for_autocomplete(items, display_values={})
       result = []
 
       items.each do |item_with_category|  
-        result += [{ "value" => item_with_category.first.to_s.sub(/data_/,'').titleize.pluralize, "class" => "autocomplete_header" }]
+        result += [{ "value" => item_with_category.first, "class" => "autocomplete_header" }]
         result += item_with_category.second.collect do |item|
-          #if there are no display values, take the first target
-          display_value = !display_values.nil? ? display_values[ item.class.name.underscore.to_sym ] : targets[ item.class.name.underscore.to_sym ][0]
-          hash = { "id" => item.id, "label" => item.send( display_value ), "value" => item.send( display_value ), "type" => item.class.name.underscore }
-          test[ item.class.name.underscore.to_sym ].each do |datum|
-            hash[datum] = item.send(datum)
-          end if !extra_data.nil?
+          #if there are no display values, take name
+          display_value = !display_values.nil? ? display_values[ item.class.name.underscore.to_sym ] : "name"
+          hash = { "id" => item.id, "label" => item.send( display_value ), "value" => item.send( display_value ) }
 
           hash
         end

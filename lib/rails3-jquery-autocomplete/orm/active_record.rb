@@ -1,52 +1,54 @@
 module Rails3JQueryAutocomplete
   module Orm
     module ActiveRecord
-      def get_autocomplete_order(method, options, model=nil)
-        order = options[:order]
-
-        table_prefix = model ? "#{model.table_name}." : ""
-        order || "#{table_prefix}#{method} ASC"
-      end
-
       def get_autocomplete_items(parameters)
-        model   = parameters[:model]
         term    = parameters[:term]
-        method  = parameters[:method]
         options = parameters[:options]
-        scopes  = Array(options[:scopes])
-        where   = options[:where]
         limit   = get_autocomplete_limit(options)
-        order   = get_autocomplete_order(method, options, model)
 
+        search = Search.new(:keyword => term, :max_result => limit)
 
-        items = model.scoped
-        
-        scopes.each { |scope| items = items.send(scope) } unless scopes.empty?
+        items = {}
 
-        items = items.select(get_autocomplete_select_clause(model, method, options)) unless options[:full_model]
-        items = items.where(get_autocomplete_where_clause(model, term, method, options)).
-            limit(limit).order(order)
-        items = items.where(where) unless where.blank?
+        result = []
+        search.data_organizations.each do |res|
+          result += [res]
+        end
+        items.merge!("Organizations" => result)
+
+        result = []
+        search.data_users.each do |res|
+          result += [res]
+        end
+        items.merge!("Users" => result)
+
+        result = []
+        search.data_workstations.each do |res|
+          result += [res]
+        end
+        items.merge!("Workstations" => result)
+
+        result = []
+        search.data_servers.each do |res|
+          result += [res]
+        end
+        items.merge!("Servers" => result)
+
+        result = []
+        search.data_network_devices.each do |res|
+          result += [res]
+        end
+        items.merge!("Network Devices" => result)
+
+        result = []
+        search.data_softwares.each do |res|
+          result += [res]
+        end
+        items.merge!("Softwares" => result)
 
         items
       end
 
-      def get_autocomplete_select_clause(model, method, options)
-        table_name = model.table_name
-        (["#{table_name}.#{model.primary_key}", "#{table_name}.#{method}"] + ((options.include?(:extra_data) && !options[:extra_data][ model.name.underscore.to_sym ].blank?) ? options[:extra_data][ model.name.underscore.to_sym ] : []))
-      end
-
-      def get_autocomplete_where_clause(model, term, method, options)
-        table_name = model.table_name
-        is_full_search = options[:full]
-        like_clause = (postgres?(model) ? 'ILIKE' : 'LIKE')
-        ["LOWER(#{table_name}.#{method}) #{like_clause} ?", "#{(is_full_search ? '%' : '')}#{term.downcase}%"]
-      end
-
-      def postgres?(model)
-        # Figure out if this particular model uses the PostgreSQL adapter
-        model.connection.class.to_s.match(/PostgreSQLAdapter/)
-      end
     end
   end
 end
